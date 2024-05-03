@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 import { LoginSchema } from "@/schemas";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Lock } from "lucide-react";
 
 import {
@@ -19,9 +19,13 @@ import { Input } from "@/components/ui/input";
 import CardWrapper from "@/components/CardWrapper";
 import { Button } from "@/components/ui/button";
 import { login } from "@/actions/login";
+import FormError from "@/components/FormError";
+import FormSuccess from "@/components/FormSuccess";
 
 export const LoginPage = () => {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -32,8 +36,15 @@ export const LoginPage = () => {
   });
 
   const onSubmit = (values: z.infer<typeof LoginSchema>) => {
+    // reset the fields
+    setError("");
+    setSuccess("");
+
     startTransition(() => {
-      login(values);
+      login(values).then((data) => {
+        setError(data.error);
+        setSuccess(data.success);
+      });
     });
   };
 
@@ -78,6 +89,8 @@ export const LoginPage = () => {
                 </FormItem>
               )}
             />
+            <FormError message={error} />
+            <FormSuccess message={success} />
             <Button type="submit" className="w-full">
               <Lock size={20} className="mr-2" /> Login
             </Button>
